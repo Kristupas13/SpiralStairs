@@ -35,7 +35,7 @@ function drawA(scene) {
 
     var radius = 15;
     var turns = 1;
-    var objPerTurn = 20;
+    var objPerTurn = 25;
 
     var angleStep = (Math.PI * 2) / objPerTurn;
     var heightStep = 1;
@@ -59,7 +59,6 @@ function drawA(scene) {
     const group = new THREE.Group();
     cilinder.position.z += 4.5;
     cilinder.position.y += 4;
-
 
     group.add(box);
     group.add(cilinder);
