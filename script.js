@@ -7,13 +7,28 @@ function load() {
     configRenderer(renderer, 0xEEFFEE, 1.0);
     configCamera(scene, camera, -90, 120, 120);
 
-    drawA(scene);
+    var controls = new function() {
+        this.radius = 25;
+        this.turns = 1;
+        this.objPerTurn = 45;
+        this.angleStep = Math.PI * 2 / (this.objPerTurn * this.turns);
+        this.heightStep = 1;
+      }
+
+    var gui = new dat.GUI();
+    gui.add(controls, 'radius', 0, 50);
+    gui.add(controls, 'turns', 0, 4);
+    gui.add(controls, 'objPerTurn', 0, 40);
+    gui.add(controls, 'angleStep', 0, Math.PI * 2);
+    gui.add(controls, 'heightStep', 0, 3);
+
+    drawA(scene, controls.radius, controls.turns, controls.objPerTurn, controls.angleStep, controls.heightStep);
 
     addSpotlight(scene);
     render(scene, renderer, camera);
 }
 
-function drawA(scene) {
+function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
     var plane = createPlane(80, 80, 0xffffff);
     plane.rotation.x = -0.5 * Math.PI;
     plane.position.x = 0
@@ -33,52 +48,85 @@ function drawA(scene) {
     var cilinderMaterial = new THREE.MeshPhongMaterial({ color: 0xB2B4B5 });
 
 
-    var radius = 15;
-    var turns = 1;
-    var objPerTurn = 25;
-
-    var angleStep = (Math.PI * 2) / objPerTurn;
-    var heightStep = 1;
-
-
     for (let i = 0; i < turns * objPerTurn; i++) {
-
-            
-    line = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), cilinderMaterial);
-
-    const path = new LineCurver(1, angleStep, radius, i);
-    const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
-    const material = new THREE.MeshPhongMaterial( { color: 0xB2B4B5 } );
-    const mesh = new THREE.Mesh( geometry, material );
-    mesh.castShadow = true;
-    //box = drawStair();
     box = new THREE.Mesh(stairGeometry, stairMaterial);
     cilinder = new THREE.Mesh(cilinderGeometry, cilinderMaterial);
+
     box.castShadow = true;
     cilinder.castShadow = true;
-    const group = new THREE.Group();
-    cilinder.position.z += 4.5;
-    cilinder.position.y += 4;
 
+    cilinder.position.z += box.position.z + 4.5;
+    cilinder.position.y += box.position.y + 4;
+
+    const group = new THREE.Group();
     group.add(box);
     group.add(cilinder);
-    // position
+    
     group.position.set(
         Math.cos(angleStep * i) * radius,
         heightStep * i,
         Math.sin(angleStep * i) * radius
     );
 
-    // rotation
-    group.rotation.y = - angleStep * i;
+    group.rotation.y = - angleStep * i + 1.6;
     group.position.y += 1;
-    group.rotation.y += 1;
 
-    mesh.position.y += 9;
-    mesh.rotation.y -= 1.7;
-    scene.add(group);
+    const path = new LineCurver(i , group.position.z, angleStep, radius);
+    const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
+    const material = new THREE.MeshPhongMaterial( { color: 0xB2B4B5 } );
+    const mesh = new THREE.Mesh( geometry, material );
+    mesh.castShadow = true;
     scene.add(mesh);
+
+    scene.add(group);
     }
+}
+
+
+
+class LineCurver extends THREE.SplineCurve {
+
+
+    constructor(y, z, angle, radius) {
+
+        super();
+        
+        this.y = y;
+        this.z = z;
+        this.angle = angle;
+        this.radius = radius;
+    }
+
+    getPoint( t, optionalTarget = new THREE.Vector3() ) {
+        let tx = Math.cos(this.angle * this.y * t) * (this.radius + 4.5);
+        let tz = Math.sin(this.angle * this.y * t) * (this.radius + 4.5);
+        let ty = this.y * t + 9;
+
+        return optionalTarget.set( tx, ty, tz );
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function drawCilinder() {
+    
 }
 
 function drawStair() {
@@ -107,6 +155,8 @@ function drawStair() {
 
     return mesh;
 }
+
+
 
 function render(scene, renderer, camera) {
     $("#WebGL-output").append(renderer.domElement);
@@ -161,14 +211,13 @@ class HolderCurver extends THREE.SplineCurve {
     _baseY;
     _baseZ;
 
-    constructor( scale = 1, baseX = 0, baseY = 0, baseZ = 0 ) {
+    constructor( baseX = 0, baseY = 0, baseZ = 0 ) {
 
         super();
         
         this._baseX = baseX;
         this._baseY = baseY;
         this._baseZ = baseZ;
-        this.scale = scale;
     }
 
     getPoint( t, optionalTarget = new THREE.Vector3() ) {
@@ -181,73 +230,7 @@ class HolderCurver extends THREE.SplineCurve {
         if (t == 0)
             ty = (t+1) * this._baseY + 10;
 
-        return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
+        return optionalTarget.set( tx, ty, tz );
 
     }
 }
-
-class LineCurver extends THREE.SplineCurve {
-
-
-    constructor( scale = 1, angle, radius, index ) {
-
-        super();
-        
-        this.scale = scale;
-        this.angle = angle;
-        this.radius = radius;
-        this.index = index;
-    }
-
-    getPoint( t, optionalTarget = new THREE.Vector3() ) {
-
-        const tx = Math.sin(this.angle * t * this.index) * this.radius * 1.27;
-        let tz = -Math.cos(-this.angle * t * this.index) * this.radius * 1.27;
-        let ty = t * this.index;
-
-
-        return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
-
-    }
-}
-
-
-
-    
-var ballGeometry = new THREE.BoxGeometry(2, 2, 2);
-var ballMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
-
-/*    
-for (i = 0; i < 15; i++) {
-    cilinder = new THREE.Mesh(cilinderGeometry, cilinderMaterial);
-    cilinder.castShadow = true;
-    cilinder.position.y = (i) * height + 2 * i + 2;
-    cilinder.position.x = width;
-    scene.add(cilinder);
-
-    box = new THREE.Mesh(stairGeometry, stairMaterial);
-    box.castShadow = true;
-    box.position.y = cilinder.position.y + 1.9;
-    box.position.x = cilinder.position.x;
-    box.rotation.y = i * 0.2;
-
-    ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.castShadow = true;
-    ball.position.y = box.position.y + 1.9;
-    ball.position.x = box.position.x;
-    ball.position.z = box.position.z - 4;
-    ball.rotation.y = i * 0.2;
-
-    const group = new THREE.Group();
-    group.add(box);
-    group.add(ball);
-    scene.add(group);
-
-    const path = new HolderCurver(1, i * 3, i * 3);
-    const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
-    const material = new THREE.MeshPhongMaterial( { color: 0xB2B4B5 } );
-    const mesh = new THREE.Mesh( geometry, material );
-    mesh.castShadow = true;
-    scene.add( mesh );
-}
-*/
