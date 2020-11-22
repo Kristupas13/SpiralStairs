@@ -16,9 +16,9 @@ function load() {
 
     var gui = new dat.GUI();
     gui.add(controls, 'radius', 0, 50);
-    gui.add(controls, 'objects', 0, 50);
-    gui.add(controls, 'angleStep', 0.05, 0.25);
-    gui.add(controls, 'heightStep', 0, 3);
+    gui.add(controls, 'objects', 0, 150);
+    gui.add(controls, 'angleStep', 0.05, 0.5);
+    gui.add(controls, 'heightStep', 0, 5);
     
     addListeners(gui, scene, renderer, camera);
 
@@ -68,11 +68,6 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
     underStairBox = drawUnderBox(heightStep);
     underStairBox.castShadow = true;
 
-    if (i != 0) {
-        underStairBoxCylinder = drawUnderBoxCylinder(heightStep, angleStep, radius);
-        underStairBoxCylinder.castShadow = true;
-        group.add(underStairBoxCylinder);
-    }
     group.add(stair);
     group.add(underStairBox);
 
@@ -85,13 +80,27 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
     group.rotation.y = - angleStep * i + 1.43;
     group.position.y += 1;
 
-    const path = new LineCurver(i , group.position.z, angleStep, radius, heightStep);
-    const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
-    const material = new THREE.MeshPhongMaterial( { color: 0xB2B4B5 } );
-    const mesh = new THREE.Mesh( geometry, material );
-    mesh.castShadow = true;
+    if (i != turns * objPerTurn - 1) {
+        const path = new LineCurver(group.position.x, group.position.y, group.position.z, angleStep, radius, heightStep, 10.5);
+        const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
+        const material = new THREE.MeshPhongMaterial( { color: 0xE5E7E7 } );
+        const mesh = new THREE.Mesh( geometry, material );
+        mesh.castShadow = true;
+        mesh.position.y += heightStep*i + 9;
+        mesh.rotation.y = - angleStep * i;
 
-    scene.add(mesh);
+        const path2 = new LineCurver(group.position.x, group.position.y, group.position.z, angleStep, radius, heightStep, 5);
+        const geometry2 = new THREE.TubeGeometry( path2, 20, 0.3, 8, false );
+        const material2 = new THREE.MeshLambertMaterial( { color: 0xdead5f } );
+        const mesh2 = new THREE.Mesh( geometry2, material2 );
+        mesh2.castShadow = true;
+        mesh2.position.y += heightStep*i + 0.5;
+        mesh2.rotation.y = - angleStep * i;
+    
+    
+        scene.add(mesh);
+        scene.add(mesh2);
+    }
 
     scene.add(group);
     }
@@ -102,26 +111,29 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
 class LineCurver extends THREE.SplineCurve {
 
 
-    constructor(y, z, angle, radius, heightStep) {
+    constructor(x, y, z, angle, radius, heightStep, constant) {
 
         super();
         
+        this.x = x;
         this.y = y;
         this.z = z;
         this.angle = angle;
         this.radius = radius;
         this.heightStep = heightStep;
+        this.constant = constant;
     }
 
     getPoint( t, optionalTarget = new THREE.Vector3() ) {
-        let tx = Math.cos(this.angle * this.y * t) * (this.radius + 10.5);
-        let tz = Math.sin(this.angle * this.y * t) * (this.radius + 10.5);
-        let ty = this.y * t * this.heightStep + 9;
+        let tx = Math.cos(this.angle * t) * (this.radius + this.constant);
+        let tz = Math.sin(this.angle * t) * (this.radius + this.constant);
+        let ty = t * this.heightStep;
 
         return optionalTarget.set( tx, ty, tz );
 
     }
 }
+
 
 function drawStairA() {
     const stair = new THREE.Shape();
