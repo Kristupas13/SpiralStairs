@@ -47,6 +47,20 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
 
     if (i % 2 != 0) {
         stair = drawStairB();
+        /*
+        let path = new HolderCurver(stair.position.x, stair.position.y, stair.position.z);
+        let geo = new THREE.TubeGeometry( path, 20, 1, 20, false );
+        let cilinder = new THREE.Mesh( geo, cilinderMaterial );
+        cilinder.castShadow = true;
+
+        cilinder.position.z += stair.position.z;
+        cilinder.position.y += stair.position.y + 0.4;
+        cilinder.position.x += stair.position.x + 1.5;
+        cilinder.rotation.y += Math.PI;
+        cilinder.scale.x = 0.5;
+        cilinder.scale.z = 0.5; 
+
+        group.add(cilinder); */
     } else {
         stair = drawStairA();
         let path = new HolderCurver(stair.position.x, stair.position.y, stair.position.z);
@@ -70,17 +84,8 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
 
     group.add(stair);
     group.add(underStairBox);
-
-    group.position.set(
-        Math.cos(angleStep * i) * radius,
-        heightStep * i,
-        Math.sin(angleStep * i) * radius
-    );
-
-    group.rotation.y = - angleStep * i + 1.43;
-    group.position.y += 1;
-
-    if (i != turns * objPerTurn - 1) {
+    var plane2;
+    if (i != Math.ceil(turns * objPerTurn - 1)) {
         const path = new LineCurver(group.position.x, group.position.y, group.position.z, angleStep, radius, heightStep, 10.5);
         const geometry = new THREE.TubeGeometry( path, 20, 0.3, 8, false );
         const material = new THREE.MeshPhongMaterial( { color: 0xE5E7E7 } );
@@ -100,7 +105,25 @@ function drawA(scene, radius, turns, objPerTurn, angleStep, heightStep) {
     
         scene.add(mesh);
         scene.add(mesh2);
+    } else {
+        plane2 = createPlane(20, 20,  0xffffff, true);
+        plane2.rotation.x = -0.5 * Math.PI;
+        plane2.position.y += heightStep;
+        plane2.position.x -= 10;
+        plane2.position.z += 2;
     }
+    if (plane2)
+    group.add(plane2);
+
+    group.position.set(
+        Math.cos(angleStep * i) * radius,
+        heightStep * i,
+        Math.sin(angleStep * i) * radius
+    );
+
+    group.rotation.y = - angleStep * i + 1.43;
+    group.position.y += 1;
+
 
     scene.add(group);
     }
@@ -173,12 +196,12 @@ function drawStairB() {
 }
 
 function drawUnderBox(heightStep) {
-    var geometry = new THREE.CylinderGeometry( 0.5, 0.5, heightStep, 32 );
+    var geometry = new THREE.CylinderGeometry( 0.5, 0.5, 2, 32 );
     var material = new THREE.MeshPhongMaterial({ color: 0xB2B4B5 });
     var mesh = new THREE.Mesh( geometry, material );
     mesh.position.z += 5;
     mesh.position.x += 1;
-    mesh.position.y -= heightStep / 2;
+    mesh.position.y -= 0.1;
     return mesh;
 }
 
@@ -264,9 +287,9 @@ function configCamera(scene, camera, x, y, z) {
     camera.lookAt(scene.position);
 }
 
-function createPlane(height, width, color) {
+function createPlane(height, width, color, transparent) {
     var planeGeometry = new THREE.PlaneGeometry(height, width);
-    var planeMaterial = new THREE.MeshLambertMaterial({ color: color });
+    var planeMaterial = new THREE.MeshLambertMaterial({ color: color, opacity: 0.5, transparent: transparent });
     var plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.receiveShadow = true;
 
