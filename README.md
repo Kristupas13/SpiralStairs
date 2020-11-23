@@ -8,4 +8,4 @@ Second progress
 ![Second progress](https://github.com/Kristupas13/SpiralStairs/blob/main/images/antras.png)
 
 Final
-![Final](https://github.com/Kristupas13/SpiralStairs/blob/main/images/final.jpg)
+![Final](https://github.com/Kristupas13/SpiralStairs/blob/main/images/final.png)
